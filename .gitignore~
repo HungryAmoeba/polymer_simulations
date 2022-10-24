@@ -121,8 +121,8 @@ celerybeat.pid
 *.sage.py
 
 # VIM stuff
-.py~
-.un~
+*.py~
+*.un~
 
 # Environments
 .env

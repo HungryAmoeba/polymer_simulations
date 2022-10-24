@@ -123,7 +123,7 @@ celerybeat.pid
 # VIM stuff
 *.py~
 *.un~
-
+*~
 # Environments
 .env
 .venv
