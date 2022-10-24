@@ -26,7 +26,7 @@ polymer.populate_grid()
 polymer.visualize_grid()
 #polymer.print_grid()
 polymer.calculate_bending()
-polymer.metropolis(N_steps = 10000)
+polymer.metropolis(N_steps = 100)
 polymer.visualize_grid()
 print("success")
 

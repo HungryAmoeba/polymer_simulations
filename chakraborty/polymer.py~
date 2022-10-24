@@ -100,6 +100,11 @@ class polymer_chain:
             point_order_list = np.random.permutation(self.N)
             #__import__('pdb').set_trace()
             for point in point_order_list:
+                if self.monomer_states[point][0] > self.grid_dimension or self.monomer_states[point][1] > self.grid_dimension:
+                    __import__('pdb').set_trace()
+
+                if self.monomer_states[point][0] < 0 or self.monomer_states[point][1] < 0:
+                    __import__('pdb').set_trace()
                 point_unassigned = 1
                 tries = 0
                 move_order_choice = np.random.permutation(8)
