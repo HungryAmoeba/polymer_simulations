@@ -2,6 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import os
 
 def permute_moves(tuples):
     moves = list()
@@ -37,7 +38,7 @@ class polymer_chain:
         self.bending_energy = 0
         self.allowed_bonds = permute_moves(([2,0], [2,1], [2,2], [3,0], [3,1], [3,2]))
         self.monomer_states = np.zeros((N,2), dtype = np.intc) # true positions. doesn't depend on boundary
-        self.beta = 1
+        self.beta = .01
     
     def populate_grid(self):
         # randomly choose a starting point, and mark it in the grid
@@ -66,12 +67,16 @@ class polymer_chain:
                     self.monomer_states[index] = self.monomer_states[index - 1] + move
                     point_unassigned = 0
 
-    def visualize_grid(self):
+    def visualize_grid(self, n_steps, directory = 'None'):
         plt.figure()
         plt.plot(self.monomer_states[:,0], self.monomer_states[:,1])
         plt.xticks([],[])
         plt.yticks([],[])
-        plt.show()
+        plt.title(f'N = {self.N}, l_p = {self.l_p}, W = {self.grid_dimension},E = {round(self.bending_energy)}, step = {n_steps} ')
+        if directory == 'None':
+            plt.savefig(f'{self.N}_{self.l_p}_{self.grid_dimension}_{n_steps}.png')
+        else:
+            plt.savefig(directory + f'/{self.N}_{self.l_p}_{self.grid_dimension}_{n_steps}.png')
 
     def print_grid(self):
         print(self.grid)
@@ -91,11 +96,15 @@ class polymer_chain:
             self.derivatives[ind] = normalize( normalize(self.monomer_states[ind] - self.monomer_states[ind - 1]) + normalize(self.monomer_states[ind + 1] - self.monomer_states[ind]))
         self.bending_energy = self.calculate_bending_energy(self.derivatives)
 
-    def metropolis(self, N_steps = 10000):
+    def metropolis(self, N_steps = 10000, savefig = 0):
+        if savefig != 0:
+            dir_name = f'{self.N}_{self.l_p}_{self.grid_dimension}_simulation'
+            os.mkdir(dir_name)
         allowed_moves = permute_moves(([1,1], [1,0]))
         grid_offset = np.array([self.pad_width, self.pad_width])
         for iteration in tqdm(range(N_steps)):
-
+            if iteration % savefig == 0:
+                self.visualize_grid(iteration, directory = dir_name)
             # at each iteration, visit every point
             point_order_list = np.random.permutation(self.N)
             #__import__('pdb').set_trace()
