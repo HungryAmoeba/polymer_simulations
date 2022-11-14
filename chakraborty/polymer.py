@@ -69,7 +69,7 @@ class polymer_chain:
 
     def visualize_grid(self, n_steps, directory = 'None'):
         plt.figure()
-        plt.plot(self.monomer_states[:,0], self.monomer_states[:,1])
+        plt.plot(self.monomer_states[:,0], self.monomer_states[:,1], linewidth = 1, marker = "*")
         plt.xticks([],[])
         plt.yticks([],[])
         plt.title(f'N = {self.N}, l_p = {self.l_p}, W = {self.grid_dimension},E = {round(self.bending_energy)}, step = {n_steps} ')
@@ -83,11 +83,15 @@ class polymer_chain:
 
     def calculate_bending_energy(self, derivative_array):
         # assumes that the derivative array is of length N
-        end_zero_derivative = np.append(derivative_array, np.zeros((1,2)), axis = 0)
-        start_zero_derivative = np.insert(derivative_array, 0, np.zeros((1,2)), axis=0)
-        norms = np.linalg.norm(end_zero_derivative - start_zero_derivative, axis = 1)
-        relevant_diffs = norms[0:self.N - 1]
-        bending_energy = self.l_p / (2 * self.b) * sum( np.square(relevant_diffs))
+        #end_zero_derivative = np.append(derivative_array, np.zeros((1,2)), axis = 0)
+        #start_zero_derivative = np.insert(derivative_array, 0, np.zeros((1,2)), axis=0)
+        #norms = np.linalg.norm(end_zero_derivative - start_zero_derivative, axis = 1)
+        #relevant_diffs = norms[0:self.N - 1]
+        #bending_energy = self.l_p / (2 * self.b) * sum( np.square(relevant_diffs))
+        sum = 0
+        for ind in range(0, self.N-1):
+            sum += np.linalg.norm( derivative_array[ind + 1] - derivative_array[ind] ) **2
+        bending_energy = sum * self.l_p / (2 * self.b)
         return bending_energy
 
 
@@ -106,7 +110,7 @@ class polymer_chain:
             if iteration % savefig == 0:
                 self.visualize_grid(iteration, directory = dir_name)
             # at each iteration, visit every point
-            point_order_list = np.random.permutation(self.N)
+            point_order_list = np.random.randint(0, high = self.N, size = self.N)
             #__import__('pdb').set_trace()
             for point in point_order_list:
                 point_unassigned = 1
@@ -127,17 +131,18 @@ class polymer_chain:
                     
                     for x_offset in range(-1, 2):
                         for y_offset in range(-1,2):
-                            if self.grid[tuple(proposed_grid_location + [x_offset, y_offset])] == 1 and not np.array_equal([x_offset, y_offset], -move):
-                                legal_move = 0
+                            if not np.array_equal([x_offset, y_offset], -move):
+                                if self.grid[tuple(proposed_grid_location + [x_offset, y_offset])] == 1:
+                                    legal_move = 0
                     # check that the proposed grid location is not too far away:
                     # check new distance to prior equation
                     if point != 0:
                         dist = self.monomer_states[point] + move - self.monomer_states[point - 1]
-                        if np.linalg.norm(dist) > 4:
+                        if np.linalg.norm(dist) >= 4:
                             legal_move = 0
                     if point != self.N - 1:
                         dist = self.monomer_states[point] + move - self.monomer_states[point + 1]
-                        if np.linalg.norm(dist) > 4:
+                        if np.linalg.norm(dist) >= 4:
                             legal_move = 0
                     
                     if legal_move: 
@@ -162,7 +167,7 @@ class polymer_chain:
                         else:
                             # accept with some probability given by the difference
                             energy_diff = new_energy - self.bending_energy
-                            if np.exp(-1 * self.beta * energy_diff) < np.random.uniform(0,1):
+                            if np.exp(-1 * energy_diff) < np.random.uniform(0,1):
                                 # reset the previous board state
                                 self.grid[tuple(self.monomer_states[point] + grid_offset)] = 0
                                 # accept the move 
