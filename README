@@ -1,1 +1,6 @@
 Bond fluctuation model of semiflexible polymer chain in confinement
+pybind
+Randomly sample the N from the points. One point might be chosen twice, but
+otherwise detailed balance is not satisfied.
+
+
