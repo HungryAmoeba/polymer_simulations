@@ -38,7 +38,8 @@ class polymer_chain:
         self.bending_energy = 0
         self.allowed_bonds = permute_moves(([2,0], [2,1], [2,2], [3,0], [3,1], [3,2]))
         self.monomer_states = np.zeros((N,2), dtype = np.intc) # true positions. doesn't depend on boundary
-        self.beta = .01
+        self.beta = 1
+        self.energy_history = np.zeros(1)
     
     def populate_grid(self):
         # randomly choose a starting point, and mark it in the grid
@@ -101,6 +102,7 @@ class polymer_chain:
         self.bending_energy = self.calculate_bending_energy(self.derivatives)
 
     def metropolis(self, N_steps = 10000, savefig = 0):
+        self.energy_history = np.zeros(N_steps // 10 + 1)
         if savefig != 0:
             dir_name = f'{self.N}_{self.l_p}_{self.grid_dimension}_simulation'
             os.mkdir(dir_name)
@@ -110,6 +112,8 @@ class polymer_chain:
             if iteration % savefig == 0:
                 self.visualize_grid(iteration, directory = dir_name)
             # at each iteration, visit every point
+            if iteration % 10 == 0:
+                self.energy_history[iteration//10] = self.bending_energy
             point_order_list = np.random.randint(0, high = self.N, size = self.N)
             #__import__('pdb').set_trace()
             for point in point_order_list:
@@ -152,6 +156,7 @@ class polymer_chain:
                         new_monomer_states = np.copy(self.monomer_states)
                         new_monomer_states[point] = new_monomer_states[point] + move
                         new_monomer_derivatives = np.copy(self.derivatives)
+                        # only recalculate the relevant derivatives
                         for ind in range(np.max((0,point - 2)), np.min((self.N-1, point + 2))):
                             new_monomer_derivatives[ind] = normalize( normalize(new_monomer_states[ind] - new_monomer_states[ind - 1]) + normalize(new_monomer_states[ind + 1] - new_monomer_states[ind])) 
                         new_energy = self.calculate_bending_energy(new_monomer_derivatives)
@@ -167,7 +172,7 @@ class polymer_chain:
                         else:
                             # accept with some probability given by the difference
                             energy_diff = new_energy - self.bending_energy
-                            if np.exp(-1 * energy_diff) < np.random.uniform(0,1):
+                            if np.exp(-1 * energy_diff) < np.random.uniform():
                                 # reset the previous board state
                                 self.grid[tuple(self.monomer_states[point] + grid_offset)] = 0
                                 # accept the move 
@@ -177,6 +182,8 @@ class polymer_chain:
                                 self.bending_energy = new_energy
 
 
-
-                    
+        fig, ax = plt.subplots()
+        ax.plot(self.energy_history)
+        ax.set_title('Energy history')
+        fig.show()
     

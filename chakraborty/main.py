@@ -7,7 +7,7 @@ from polymer import polymer_chain
 
 argc = len(sys.argv)
 if argc != 4:
-    print(f"Usage: square_confinement.py --N --persistence_length --box_length")
+    print(f"Usage: python main.py --N --persistence_length --box_length")
     print("N is equivalent to L in the paper")
     print(quit)
     quit()
@@ -26,4 +26,3 @@ polymer.populate_grid()
 polymer.calculate_bending()
 polymer.metropolis(N_steps = N_steps + 1, savefig = 1000)
 print("success")
-
