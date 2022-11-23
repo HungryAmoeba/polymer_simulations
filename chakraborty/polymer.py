@@ -104,7 +104,7 @@ class polymer_chain:
     def metropolis(self, N_steps = 10000, savefig = 0):
         self.energy_history = np.zeros(N_steps // 10 + 1)
         if savefig != 0:
-            dir_name = f'{self.N}_{self.l_p}_{self.grid_dimension}_simulation'
+            dir_name = f'simulation_results/{self.N}_{self.l_p}_{self.grid_dimension}_simulation'
             os.mkdir(dir_name)
         allowed_moves = permute_moves(([1,1], [1,0]))
         grid_offset = np.array([self.pad_width, self.pad_width])

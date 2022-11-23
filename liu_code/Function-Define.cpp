@@ -1,6 +1,6 @@
-Parameters:
-int polymer: the polymer chosen to be generated
-int position: the cite that the new bond is attached to
+//Parameters:
+//int polymer: the polymer chosen to be generated
+//int position: the cite that the new bond is attached to
 void BondInitial(int polymer,int position)
 {
 int bondx,bondy; // coordinate of bond vectors
