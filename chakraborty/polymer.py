@@ -41,7 +41,10 @@ class polymer_chain:
         self.beta = 1
         self.energy_history = np.zeros(1)
     
-    def populate_grid(self):
+    def populate_grid(self, population_attempts = 0):
+        if population_attempts >= 50:
+            print(f"could not populate board in {population_attempts} attempts")
+            raise Exception("Could not populate board. Try again, or reduce N")
         # randomly choose a starting point, and mark it in the grid
         grid_offset = np.array([self.pad_width, self.pad_width])
         self.monomer_states[0] = np.random.randint(0, high = self.grid_dimension, size = (1,2))
@@ -49,10 +52,11 @@ class polymer_chain:
         
         # loop through the rest of the monomer states
         for index in range(1,self.N):
-            point_unassigned = 1
-            while point_unassigned:
+            point_unassigned = 1; tries = 0
+            move_order = np.random.permutation(self.allowed_bonds) 
+            while point_unassigned and tries < 8:
                 # propose a random move
-                move = random.choice(self.allowed_bonds)
+                move = move_order[tries]
                 #ensure that this move is not out of bounds
                 proposed_grid_location = self.monomer_states[index - 1] + move + grid_offset 
                 legal_move = 1
@@ -67,6 +71,17 @@ class polymer_chain:
                     self.grid[tuple(proposed_grid_location)] = 1
                     self.monomer_states[index] = self.monomer_states[index - 1] + move
                     point_unassigned = 0
+                tries = tries + 1
+            if point_unassigned:
+                # populating the board failed
+                population_attempts = population_attempts + 1
+                #clear everything and try again TODO
+                for monomer in self.monomer_states:
+                    self.grid[tuple(monomer + grid_offset)] = 0
+                self.monomer_states = np.zeros((self.N,2), dtype = np.intc) 
+                self.populate_grid(population_attempts = population_attempts)
+
+                 
 
     def visualize_grid(self, n_steps, directory = 'None'):
         plt.figure()

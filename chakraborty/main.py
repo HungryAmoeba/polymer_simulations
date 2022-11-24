@@ -20,9 +20,9 @@ N = int(sys.argv[1]); l_p = int(sys.argv[2]); W = int(sys.argv[3]);
 b = 2.8
 
 box_length = int(np.ceil(b * W))
-N_steps = 10000
+N_steps = int(10e5)
 polymer = polymer_chain(N, box_length, l_p)
 polymer.populate_grid()
 polymer.calculate_bending()
-polymer.metropolis(N_steps = N_steps + 1, savefig = 1000)
+polymer.metropolis(N_steps = N_steps + 1, savefig = int(10e4))
 print("success")
