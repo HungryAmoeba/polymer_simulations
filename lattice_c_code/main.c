@@ -8,18 +8,28 @@
 
 int main(int argc, char **argv) {
 
-    int lw = 120;                       // lattice board width
+    int lw = 50;                       // lattice board width
     int N = 50;                         // number of monomers
     float l_p = 15.0;                   // persistence length
     float b = 2.8;                      // average bond length
 
     int states[N][2];                   // create 2D array for the monomers
-    // int lat[lw][lw];                    // create lattice
+    // int lat[lw][lw];                 // create lattice
     float d[N][2];                      // derivatives
     float dd[N-1][2];                   // store differences in adjacent derivatives
 
-    int n_steps = 10000000;                    // number of steps
+    int n_steps = 10001;              // number of monte carlo sweeps
+    int save_freq = 10000;
     float ce = 0;                       // current energy
+    int total_accept = 0;
+    int total_reject = 0;
+
+    FILE *fptr = fopen("simulation_results/results.txt", "w");
+    if (fptr == NULL) {
+        printf("Error in opening file pointer \n");
+        exit(1);
+    }
+    printf("Found file to write to\n");
 
     // create the lattice
     int** lat = (int**)malloc(lw *sizeof(int*));
@@ -29,15 +39,30 @@ int main(int argc, char **argv) {
 
     // populate the lattice
     int fs = 0; // number of filled states
-    for (size_t i = 0; i < lw; i++) {
-        for (size_t j = 0; j < lw; j++) {
-            if (fs < N && i % 3 == 0 && j % 3 == 0) {
-                lat[i][j] = 1;
-                states[fs][0] = i;
-                states[fs][1] = j;
+    for (int i = 0; i < lw; i++) {
+        if (i%2 == 0) {
+            for (int j = 0; j < lw; j++) {
+                if (fs < N && i % 3 == 0 && j % 3 == 0) {
+                    lat[i][j] = 1;
+                    states[fs][0] = i;
+                    states[fs][1] = j;
+                    fs++;
+                } else {
+                    lat[i][j] = 0;
+                }
             }
-            else {
-                lat[i][j] = 0;
+        }
+
+        if (i %2 == 1) {
+            for (int j = (lw - 1); j >= 0; j--) {
+                if (fs < N && i % 3 == 0 && j % 3 == 0) {
+                    lat[i][j] = 1;
+                    states[fs][0] = i;
+                    states[fs][1] = j;
+                    fs++;
+                } else {
+                    lat[i][j] = 0;
+                }
             }
         }
     }
@@ -87,10 +112,16 @@ int main(int argc, char **argv) {
     double cpu_time_used;
     start = clock();
     for (size_t step = 0; step < n_steps; step++) {
-        if (step % 1000000 == 0) {
+        if (step % save_freq == 0) {
             curr = clock();
             cpu_time_used = ((double) (curr - start)) / CLOCKS_PER_SEC;
             printf("Step is %zu after time %f\n", step, cpu_time_used);
+
+            // save states to the file
+            fprintf(fptr, "Step is %zu \n", step);
+            for (size_t i = 0; i < N; i++) {
+                fprintf(fptr, "%d,%d\n", states[i][0],states[i][1]);
+            }
         }
         // choose N points to shift
         for (size_t pt = 0; pt < N; pt ++) {
@@ -107,11 +138,14 @@ int main(int argc, char **argv) {
             for (int s = 0; s < 8; s++) {
                 if (made_mv == 0) {
                     int *mv_arr = get_move(so[s]);
-                    int legal_move = check_legal(ind, states, lat, mv_arr, lw);
+                    int legal_move = check_legal(ind, states, lat, mv_arr, lw, N);
                     if (legal_move) {
                         made_mv = 1;
                         final_move_ind = s;
-                    } 
+                        total_accept++;
+                    } else {
+                        total_reject++;
+                    }
                     free(mv_arr);
                 }
             }
@@ -221,7 +255,9 @@ int main(int argc, char **argv) {
         free(lat[i]);
     }
     free(lat);
-
+    fclose(fptr);
+    printf("total running has %d acceptances, %d rejections\n", total_accept, total_reject);
     printf("success! \n");
+    return 0;
 }
 

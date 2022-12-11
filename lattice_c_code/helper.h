@@ -21,6 +21,6 @@ void shuffle(int *array, size_t n);
  */
 int *get_move(int move_num);
 
-int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw);
+int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw, int N);
 
 #endif

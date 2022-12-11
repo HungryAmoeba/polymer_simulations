@@ -47,7 +47,7 @@ int *get_move(int move_num) {
   return move_arr;
 }
 
-int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw) {
+int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw, int N) {
   // check that the proposed move is not out of bounds
   int pi = states[index][0] + move_arr[0];
   int pj = states[index][1] + move_arr[1];
@@ -61,6 +61,8 @@ int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw) {
     return 0;
   }
   // move is not out of bounds, and proposed square is not occupied
+
+  // check for excluded volume
   for (size_t i = -1; i < 2; i ++) {
     for (size_t j = -1; j < 2; j ++) {
       if (i != -move_arr[0] || j != -move_arr[1]) {
@@ -69,6 +71,24 @@ int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw) {
         }
       }
     }
+  }
+
+  // check length does not exceed 3
+  if (index != 0) {
+    // compare to previous monomer
+    int dist_x = pi - states[index-1][0];
+    int dist_y = pj - states[index-1][1];
+    if (dist_x*dist_x + dist_y*dist_y > 13) {
+      return 0;
+    }
+  }
+  if (index != N-1) {
+    // compare to next monomer
+    int dist_x = pi - states[index+1][0];
+    int dist_y = pj - states[index+1][1];
+    if (dist_x*dist_x + dist_y*dist_y > 13) {
+      return 0;
+    } 
   }
   return 1;
 }

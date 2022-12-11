@@ -211,7 +211,7 @@ chakraborty/simulation_results*
 *.su
 *.idb
 *.pdb
-
+*/simulation_results
 # Kernel Module Compile Results
 *.mod*
 *.cmd
