@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import os
+import math
 
 def permute_moves(tuples):
     moves = list()
@@ -20,7 +21,7 @@ def permute_moves(tuples):
     return moves
 
 def normalize(v):
-    norm = np.linalg.norm(v)
+    norm = math.sqrt(v[0]**2 + v[1]**2)
     if norm == 0:
         return v
     return v/ norm
