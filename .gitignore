@@ -212,6 +212,7 @@ chakraborty/simulation_results*
 *.idb
 *.pdb
 */simulation_results
+*/plotted_states
 # Kernel Module Compile Results
 *.mod*
 *.cmd

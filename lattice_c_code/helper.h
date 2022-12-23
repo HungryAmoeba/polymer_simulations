@@ -23,4 +23,5 @@ int *get_move(int move_num);
 
 int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw, int N);
 
+double calc_energy(int states[][2], int N, double l_p, double b);
 #endif
