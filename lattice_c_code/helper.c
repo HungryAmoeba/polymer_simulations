@@ -103,52 +103,60 @@ int check_legal(int index, int states[][2], int **lat, int *move_arr, int lw, in
   return 1;
 }
 
+// i is the index of the term that you want to calculate the derivative of
+double *get_derivative(int i, int N, int states[][2]) {
+  double* derivative = malloc(2 * sizeof(double));
+  if (i == 0) {
+    double i_diff = states[i + 1][0] - states[i][0];
+    double j_diff = states[i + 1][1] - states[i][1];
+    double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
+    derivative[0] = i_diff/norm;
+    derivative[1] = j_diff/norm;
+  } else if (i == N-1) {
+    double i_diff = states[i][0] - states[i-1][0];
+    double j_diff = states[i][1] - states[i-1][1];
+    double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
+    derivative[0] = i_diff/norm;
+    derivative[1] = j_diff/norm;            
+  } else {
+    // calculate derivatives using the normal formula
+    double fti = states[i][0] - states[i-1][0];
+    double ftj = states[i][1] - states[i-1][1];
+    double norm = sqrt(fti*fti + ftj*ftj);
+    double ni = fti/norm; double nj = ftj/norm;
+
+    double sti = states[i+1][0] - states[i][0];
+    double stj = states[i+1][1] - states[i][1];
+    norm = sqrt(sti*sti + stj*stj);
+    ni = ni + sti/norm; nj = nj + stj/norm;
+
+    norm = sqrt(ni*ni + nj*nj);
+    derivative[0] = ni/norm; 
+    derivative[1] = nj/norm;
+  }
+  return derivative;
+}
+
+
 double calc_energy(int states[][2], int N, double l_p, double b) {
   double ce = 0;
   double d[N][2];
   double dd[N-1][2];
 
-  for (size_t i = 0; i < N; i++) {
-        if (i == 0) {
-            double i_diff = states[i + 1][0] - states[i][0];
-            double j_diff = states[i + 1][1] - states[i][1];
-            double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
-            d[i][0] = i_diff/norm;
-            d[i][1] = j_diff/norm;
-        } else if (i == N-1) {
-            double i_diff = states[i][0] - states[i-1][0];
-            double j_diff = states[i][1] - states[i-1][1];
-            double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
-            d[i][0] = i_diff/norm;
-            d[i][1] = j_diff/norm;            
-        } else {
-            // calculate derivatives using the normal formula
-            double fti = states[i][0] - states[i-1][0];
-            double ftj = states[i][1] - states[i-1][1];
-            double norm = sqrt(fti*fti + ftj*ftj);
-            double ni = fti/norm; double nj = ftj/norm;
-
-            double sti = states[i+1][0] - states[i][0];
-            double stj = states[i+1][1] - states[i][1];
-            norm = sqrt(sti*sti + stj*stj);
-            ni = ni + sti/norm; nj = nj + stj/norm;
-
-            norm = sqrt(ni*ni + nj*nj);
-            d[i][0] = ni/norm; d[i][1] = nj/norm;
-        }
-        //printf("Derivative at ind %zu is %f, %f\n", i, d[i][0], d[i][1]);
-    }
-
-    // calculate differences in derivatives
-    // and update current energy
-    
-    for (size_t i = 0; i < N-1; i++) {
-        dd[i][0] = d[i+1][0] - d[i][0];
-        dd[i][1] = d[i+1][1] - d[i][1];
-        //printf("For index %zu, additional term is %f \n",i,(dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b) );
-        //printf("dd here is %f, %f\n", dd[i][0], dd[i][1]);
-        ce += (dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b);
-    }
-
-    return ce;
+  for (int i = 0; i < N; i++) {
+    double *derivative = get_derivative(i, N, states);
+    d[i][0] = derivative[0];
+    d[i][1] = derivative[1];
+    free(derivative);
+  }
+  // calculate differences in derivatives
+  // and update current energy
+  for (size_t i = 0; i < N-1; i++) {
+      dd[i][0] = d[i+1][0] - d[i][0];
+      dd[i][1] = d[i+1][1] - d[i][1];
+      //printf("For index %zu, additional term is %f \n",i,(dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b) );
+      //printf("dd here is %f, %f\n", dd[i][0], dd[i][1]);
+      ce += (dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b);
+  }
+  return ce;
 }

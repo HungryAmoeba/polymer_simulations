@@ -18,8 +18,8 @@ int main(int argc, char **argv) {
     double d[N][2];                      // derivatives
     double dd[N-1][2];                   // store differences in adjacent derivatives
 
-    int n_steps =  1 + 1E7;              // number of monte carlo sweeps
-    int save_freq = 1E6;
+    int n_steps =  1 + 1E7;//1 + 1E7;              // number of monte carlo sweeps
+    int save_freq = 1E6;//1E6;
     double ce = 0;                       // current energy
     int total_accept = 0;
     int total_reject = 0;
@@ -67,35 +67,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    for (size_t i = 0; i < N; i++) {
-        if (i == 0) {
-            double i_diff = states[i + 1][0] - states[i][0];
-            double j_diff = states[i + 1][1] - states[i][1];
-            double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
-            d[i][0] = i_diff/norm;
-            d[i][1] = j_diff/norm;
-        } else if (i == N-1) {
-            double i_diff = states[i][0] - states[i-1][0];
-            double j_diff = states[i][1] - states[i-1][1];
-            double norm = sqrt(i_diff*i_diff + j_diff * j_diff);
-            d[i][0] = i_diff/norm;
-            d[i][1] = j_diff/norm;            
-        } else {
-            // calculate derivatives using the normal formula
-            double fti = states[i][0] - states[i-1][0];
-            double ftj = states[i][1] - states[i-1][1];
-            double norm = sqrt(fti*fti + ftj*ftj);
-            double ni = fti/norm; double nj = ftj/norm;
-
-            double sti = states[i+1][0] - states[i][0];
-            double stj = states[i+1][1] - states[i][1];
-            norm = sqrt(sti*sti + stj*stj);
-            ni = ni + sti/norm; nj = nj + stj/norm;
-
-            norm = sqrt(ni*ni + nj*nj);
-            d[i][0] = ni/norm; d[i][1] = nj/norm;
-        }
-        //printf("Derivative at ind %zu is %f, %f\n", i, d[i][0], d[i][1]);
+    // calculate initial derivatives and differences in derivatives
+    for (int i = 0; i < N; i++) {
+        // first handle edge cases (start or end of array)
+        double *derivative = get_derivative(i, N, states);
+        d[i][0] = derivative[0];
+        d[i][1] = derivative[1];
+        free(derivative);
     }
 
     // calculate differences in derivatives
@@ -139,130 +117,56 @@ int main(int argc, char **argv) {
             int made_mv = 0;
             int final_move_ind = -1;
 
-            for (int s = 0; s < 8; s++) {
-                if (!made_mv) {
-                    int *mv_arr = get_move(so[s]);
-                    int legal_move = check_legal(ind, states, lat, mv_arr, lw, N);
-                    if (legal_move) {
-                        made_mv = 1;
-                        final_move_ind = s;
-                        //printf("in here, %d, %d\n", mv_arr[0],mv_arr[1]);
-                    } 
-                    free(mv_arr);
+            int s = 0;
+
+            while ((!made_mv) && (s < 8)) {
+                int *mv_arr = get_move(so[s]);
+                int legal_move = check_legal(ind, states, lat, mv_arr, lw, N);
+                if (legal_move) {
+                    made_mv = 1;
+                    final_move_ind = s;
                 }
+                free(mv_arr);
+                s++;
             }
 
             if (made_mv) { 
-                //printf("%d",final_move_ind);
                 int *pm = get_move(so[final_move_ind]);
-                //printf("proposed move is %d,%d\n", pm[0], pm[1]);
                 // calculate the energy difference of the new move
+                int original_i = states[ind][0];
+                int original_j = states[ind][1];
                 int pi = states[ind][0] + pm[0];
                 int pj = states[ind][1] + pm[1];
-                //printf("at ind %d, previous is %d, %d, proposed is %d, %d\n", ind, states[ind][0], states[ind][1], pi, pj);
-                if (ind == 0) {
-                    double pdi = states[ind + 1][0] - pi; // proposed derivative i term
-                    double pdj = states[ind + 1][1] - pj; // proposed derivative j term
-                    double norm = sqrt(pdi*pdi + pdj*pdj);
-                    pdi = pdi/norm; pdj = pdj/norm;
-                    double pddi = d[ind + 1][0] - pdi; // difference in derivative i term
-                    double pddj = d[ind + 1][1] - pdj; // difference in derivative j term
-                    // compare to previous energy
-                    double prev_e = (dd[ind][0]*dd[ind][0] + dd[ind][1]*dd[ind][1]) * l_p/(2 * b); 
-                    double prop_e = (pddi*pddi + pddj*pddj) * l_p/(2 * b);
-                    double delta_e = prop_e - prev_e;
-                    double runif =((double) rand()/(double)RAND_MAX);
-                    total_reject++;
-                    if (exp(-delta_e) > runif) {
-                        //printf("accepting the state at ind 0\n");
-                        // accept the state
-                        lat[states[ind][0]][states[ind][1]] = 0;
-                        states[ind][0] = pi;
-                        states[ind][1] = pj;
-                        lat[states[ind][0]][states[ind][1]] = 1;
-                        d[ind][0] = pdi; d[ind][1] = pdj;
-                        dd[ind][0] = pddi; dd[ind][1] = pddj;
-                        ce = ce + delta_e;
-                        total_accept++;
-                        total_reject--;   
+                states[ind][0] = pi;
+                states[ind][1] = pj;
+
+                double prop_energy = calc_energy(states, N, l_p, b);
+                double delta_e = prop_energy - ce;
+                double runif = (double)rand()/(double)RAND_MAX;
+                if (exp(-delta_e) > runif) {
+                    ce = prop_energy;
+                    // recalculate the necessary derivatives
+                    for (int i = fmax(0, ind-1); i < fmin(N-1, ind + 1); i++) {
+                        double *derivative = get_derivative(i, N, states);
+                        d[ind][0] = derivative[0];
+                        d[ind][1] = derivative[1];
+                        free(derivative);
                     }
-                } else if (ind == N-1) {
-                    double pdi = pi - states[ind-1][0];
-                    double pdj = pj - states[ind-1][1];
-                    double norm = (pdi*pdi + pdj*pdj);
-                    pdi = pdi/norm; pdj = pdj/norm;
-                    double pddi = pdi - d[ind-1][0];
-                    double pddj = pdi - d[ind-1][1];
-                    double prev_e = (dd[ind-1][0]*dd[ind-1][0] + dd[ind-1][1]*dd[ind-1][1]) * l_p/(2 * b); 
-                    double prop_e = (pddi*pddi + pddj*pddj) * l_p/(2 * b);
-                    double delta_e = prop_e -prev_e;
-                    double runif = ((double) rand()/(double)RAND_MAX);
-                    total_reject++;
-                    if (exp(-delta_e) > runif) {
-                        // accept the state
-                        lat[states[ind][0]][states[ind][1]] = 0;
-                        states[ind][0] = pi;
-                        states[ind][1] = pj;
-                        lat[states[ind][0]][states[ind][1]] = 1;
-                        d[ind][0] = pdi; d[ind][1] = pdj;
-                        dd[ind-1][0] = pddi; dd[ind-1][1] = pddj;
-                        ce = ce + delta_e;
-                        total_accept++;
-                        total_reject--;                     
+                    // recalculate the necessary differences in derivative
+                    for (int i = fmax(0, ind-2); i < fmin(N-2, ind + 1); i++) {
+                        dd[i][0] = d[i + 1][0] - d[i][0];
+                        dd[i][1] = d[i + 1][1] - d[i][1];
                     }
+                    total_accept++;
                 } else {
-                    // calculate derivatives using the normal formula
-                    double fti = pi - states[ind-1][0]; // first term i
-                    double ftj = pj - states[ind-1][1]; // first term j
-                    double norm = sqrt(fti*fti + ftj*ftj);
-                    double ni = fti/norm; double nj = ftj/norm; //normalized i, j
-
-                    double sti = states[ind+1][0] - pi; // second term i
-                    double stj = states[ind+1][1] - pj; // second term j
-                    norm = sqrt(sti*sti + stj*stj);
-                    ni = ni + sti/norm; nj = nj + stj/norm;
-
-                    norm = sqrt(ni*ni + nj*nj);
-                    double pdi = ni/norm; double pdj = nj/norm;
-
-                    // right of monomer changes
-                    double R_pddi = d[ind + 1][0] - pdi; // difference in derivative i term
-                    double R_pddj = d[ind + 1][1] - pdj; // difference in derivative j term
-                    // compare to previous energy
-                    double R_prev_e = (dd[ind][0]*dd[ind][0] + dd[ind][1]*dd[ind][1]) * l_p/(2 * b); // rightside previous energy
-                    double R_prop_e = (R_pddi*R_pddi + R_pddj*R_pddj) * l_p/(2 * b); // rightside proposed energy
-                    double R_delta_e = R_prop_e - R_prev_e; // rightside proposed energy difference
-
-                    // left of monomer changes
-                    double L_pddi = pdi - d[ind-1][0];
-                    double L_pddj = pdi - d[ind-1][1];
-                    double L_prev_e = (dd[ind-1][0]*dd[ind-1][0] + dd[ind-1][1]*dd[ind-1][1]) * l_p/(2 * b); 
-                    double L_prop_e = (L_pddi*L_pddi + L_pddj*L_pddj) * l_p/(2 * b);
-                    double L_delta_e = L_prop_e - L_prev_e;
-
-                    double delta_e = R_delta_e + L_delta_e;
-                    double runif = ((double) rand()/(double)RAND_MAX);
+                    states[ind][0] = original_i;
+                    states[ind][1] = original_j;
                     total_reject++;
-                    if (exp(-delta_e) > runif) {
-                        // accept the state
-                        lat[states[ind][0]][states[ind][1]] = 0;
-                        states[ind][0] = pi;
-                        states[ind][1] = pj;
-                        lat[pi][pj] = 1;
-                        d[ind][0] = pdi; d[ind][1] = pdj;
-                        dd[ind-1][0] = L_pddi; dd[ind-1][1] = L_pddj;
-                        dd[ind][0] = R_pddi; dd[ind][1] = R_pddj;
-                        ce = ce + delta_e;   
-                        total_accept++;
-                        total_reject--;                     
-                    }
                 }
-
                 free(pm);
 
             }
             free(so);
-
         }
     }
 
@@ -272,7 +176,7 @@ int main(int argc, char **argv) {
     free(lat);
     fclose(fptr);
     printf("total running has %d acceptances, %d rejections\n", total_accept, total_reject);
-    printf("success! \n");
+    printf("the acceptance rate is %f\n", (float) total_accept/(total_accept + total_reject));
     return 0;
 }
 
