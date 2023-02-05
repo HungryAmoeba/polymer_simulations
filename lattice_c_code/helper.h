@@ -3,6 +3,13 @@
 
 #include <stdio.h>
 
+struct vec;
+typedef struct vec vec;
+
+vec add_vec(vec x, vec y);
+vec normalize_vec(vec x);
+
+
 /**
  * Random shuffling of an array
  * following Fisher-Yates

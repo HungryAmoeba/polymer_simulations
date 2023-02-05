@@ -1,6 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "helper.h"
+
+struct vec {
+  double i_ind;
+  double j_ind;
+};
+
+vec add_vec(vec x, vec y) {
+  vec z;
+  z.i_ind = x.i_ind + y.i_ind;
+  z.y_ind = x.j_ind + y.j_ind;
+  return z;
+}
+
+vec normalize_vec(vec x) {
+  vec n;
+  double norm = sqrt(x.i_ind * x.i_ind + x.j_ind * x.j_ind);
+  n.i_ind = x.i_ind/norm;
+  n.j_ind = x.j_ind/norm;
+  return n;
+}
 
 void shuffle(int *array, size_t n)
 {

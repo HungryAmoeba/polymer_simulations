@@ -10,16 +10,18 @@ int main(int argc, char **argv) {
 
     int lw = 50;                       // lattice board width
     int N = 50;                         // number of monomers
-    double l_p = 15.0;                   // persistence length
+    double l_p = 2.0;                   // persistence length
     double b = 2.8;                      // average bond length
 
     int states[N][2];                   // create 2D array for the monomers
     // int lat[lw][lw];                 // create lattice
     double d[N][2];                      // derivatives
     double dd[N-1][2];                   // store differences in adjacent derivatives
+    double proposed_d[N][2]; // derivatives corresonding to proposed move
+    double proposed_dd[N][2]; // differences in adjacent derivatives for proposed move
 
-    int n_steps =  1 + 1E7;//1 + 1E7;              // number of monte carlo sweeps
-    int save_freq = 1E6;//1E6;
+    int n_steps =  1 + 1E8;//1 + 1E7;              // number of monte carlo sweeps
+    int save_freq = 1E7;//1E6;
     double ce = 0;                       // current energy
     int total_accept = 0;
     int total_reject = 0;
@@ -73,6 +75,8 @@ int main(int argc, char **argv) {
         double *derivative = get_derivative(i, N, states);
         d[i][0] = derivative[0];
         d[i][1] = derivative[1];
+        proposed_d[i][0] = derivative[0];
+        proposed_d[i][1] = derivative[1];
         free(derivative);
     }
 
@@ -82,6 +86,8 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < N-1; i++) {
         dd[i][0] = d[i+1][0] - d[i][0];
         dd[i][1] = d[i+1][1] - d[i][1];
+        proposed_d[i][0] = dd[i][0];
+        proposed_d[i][1] = dd[i][1];
         //printf("For index %zu, additional term is %f \n",i,(dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b) );
         //printf("dd here is %f, %f\n", dd[i][0], dd[i][1]);
         ce += (dd[i][0] * dd[i][0] + dd[i][1] * dd[i][1]) * l_p/(2*b);
@@ -176,7 +182,7 @@ int main(int argc, char **argv) {
     free(lat);
     fclose(fptr);
     printf("total running has %d acceptances, %d rejections\n", total_accept, total_reject);
-    printf("the acceptance rate is %f\n", (float) total_accept/(total_accept + total_reject));
+    printf("the acceptance rate is %f\n", (float) total_accept/ (float) (total_accept + total_reject));
     return 0;
 }
 
