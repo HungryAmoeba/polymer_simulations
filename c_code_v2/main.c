@@ -30,7 +30,14 @@ int main(int argc, char **argv) {
     initialize_starting_state(board, monomer_locations, N);
 
     vec_array* derivative_array = create_vec_array(N);
-    vec_array* dd_array = create_vec_array(N);
+    double* dd_energy_array = malloc(N-1 * sizeof(double)); // this is NOT multiplied by l_p/2b yet
+    vec_array* dd_array = create_vec_array(N-1);
+
+    calc_derivatives(monomer_locations, derivative_array);
+    // for (int i = 0; i < N; i++) {
+    //     printf("Derivative %d is %f, %f \n", i, derivative_array->array[i].i_ind, derivative_array->array[i].j_ind);
+    // }
+    calc_dd(derivative_array, dd_array, dd_energy_array);
 
     print_array(board->array, board->rows, board->columns);
     
@@ -38,6 +45,7 @@ int main(int argc, char **argv) {
     destroy_int_array(board);
     free(monomer_locations);
 
+    free(dd_energy_array);
     destroy_vec_array(derivative_array);
     destroy_vec_array(dd_array);
 

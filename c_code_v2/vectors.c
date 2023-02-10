@@ -63,6 +63,10 @@ vec normalize_vec(vec x) {
   return n;
 }
 
+double square_vec(vec x) {
+    return x.i_ind*x.i_ind + x.j_ind*x.j_ind;
+}
+
 ivec create_ivec(int i_ind, int j_ind) {
   ivec n;
   n.i_ind = i_ind;
@@ -89,4 +93,11 @@ ivec scalar_multiplication(int lambda, ivec x) {
   product.i_ind = x.i_ind * lambda;
   product.j_ind = x.j_ind * lambda;
   return product;
+}
+
+vec ivec_to_vec(ivec a) {
+    vec vec_a;
+    vec_a.i_ind = (double) a.i_ind;
+    vec_a.j_ind = (double) a.j_ind;
+    return vec_a;
 }

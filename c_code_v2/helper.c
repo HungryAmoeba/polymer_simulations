@@ -3,7 +3,6 @@
 #include <math.h>
 #include "helper.h"
 
-
 void print_array(int **arr, int max_i, int max_j) {
     for (int i = 0; i < max_i; i++) {
         for (int j = 0; j < max_j; j++) {
@@ -22,11 +21,10 @@ void initialize_starting_state(int_array* board, ivec* monomer_locations, int N)
   int segment_length = 1;
   int segment_counter = 0;
   int segment_leg = 0;
+  // draw a spiral originating from the center of the board
   for (int i = 1; i < N; i++) {
       ivec direction = create_ivec((int) - cos(M_PI/2 * (double) segment_counter), (int) sin(M_PI/2 * (double) segment_counter));
-      printf("Direction is %d, %d \n", direction.i_ind, direction.j_ind);
       monomer_locations[i] = add_ivec(monomer_locations[i - 1], scalar_multiplication(2, direction));
-      printf("Prev monomer: %d, %d, current monomer: %d, %d \n", monomer_locations[i-1].i_ind, monomer_locations[i-1].j_ind, monomer_locations[i].i_ind, monomer_locations[i].j_ind);
       monomer_ind++;
       if (monomer_ind == segment_length) {
           segment_counter++;
@@ -103,3 +101,31 @@ int check_legal(int index, int_array* monomer_locations, int_array *board_states
   return 1;
 }
 
+void calc_derivatives(ivec* monomer_locations, vec_array* derivative_array) {
+  int N = derivative_array->n_elements;
+  ivec derivative_0 = subtract_ivec(monomer_locations[1], monomer_locations[0]);
+  derivative_array->array[0] = normalize_vec(ivec_to_vec(derivative_0));
+  ivec derivative_last = subtract_ivec(monomer_locations[N-1], monomer_locations[N-2]);
+  derivative_array->array[N-1] = normalize_vec(ivec_to_vec(derivative_last));
+  for (int i = 1; i < N-1; i ++) {
+    vec derivative_left = normalize_vec(ivec_to_vec(subtract_ivec(monomer_locations[i], monomer_locations[i-1])));
+    vec derivative_right = normalize_vec(ivec_to_vec(subtract_ivec(monomer_locations[i+1], monomer_locations[i])));
+    derivative_array->array[i] = normalize_vec(add_vec(derivative_left, derivative_right));
+  }
+}
+
+void calc_dd(vec_array* derivative_array, vec_array* dd_array, double* dd_energy_array) {
+  int N = derivative_array->n_elements;
+  for (int i = 0; i < N-1; i++) {
+    printf("i =%d in calc_dd\n", i);
+    vec dd_vec = subtract_vec(derivative_array->array[i+1], derivative_array->array[i]);
+    printf("Finished calculating dd = %f, %f \n", dd_vec.i_ind, dd_vec.j_ind);
+    // dd_array->array[i].i_ind = dd_vec.i_ind;
+    // dd_array->array[i].j_ind = dd_vec.j_ind;
+    dd_array->array[i] = dd_vec;
+    printf("dd_array is %f, %f \n", dd_array->array[i].i_ind, dd_array->array[i].j_ind);
+    printf("Finished assigning dd_array\n");
+    dd_energy_array[i] = square_vec(dd_array->array[i]);
+  }
+  printf("exiting loop \n");
+}

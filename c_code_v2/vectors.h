@@ -45,10 +45,13 @@ vec create_vec(double i_ind, double j_ind);
 vec add_vec(vec x, vec y);
 vec subtract_vec(vec x, vec y);
 vec normalize_vec(vec x);
+double square_vec(vec x);
 
 ivec create_ivec(int i_ind, int j_ind);
 ivec add_ivec(ivec a, ivec b);
 ivec subtract_ivec(ivec a, ivec b);
 ivec scalar_multiplication(int lambda, ivec x);
+
+vec ivec_to_vec(ivec a);
 
 #endif
