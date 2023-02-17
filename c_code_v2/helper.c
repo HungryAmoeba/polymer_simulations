@@ -120,12 +120,21 @@ void calc_dd(vec_array* derivative_array, vec_array* dd_array, double* dd_energy
     printf("i =%d in calc_dd\n", i);
     vec dd_vec = subtract_vec(derivative_array->array[i+1], derivative_array->array[i]);
     printf("Finished calculating dd = %f, %f \n", dd_vec.i_ind, dd_vec.j_ind);
+    // vec dd_vec; dd_vec.i_ind = 2; dd_vec.j_ind = 4;
     // dd_array->array[i].i_ind = dd_vec.i_ind;
     // dd_array->array[i].j_ind = dd_vec.j_ind;
-    dd_array->array[i] = dd_vec;
+    dd_array->array[i].i_ind = 3;
+    dd_array->array[i].j_ind = 5;
+    // dd_array->array[i] = dd_vec;
     printf("dd_array is %f, %f \n", dd_array->array[i].i_ind, dd_array->array[i].j_ind);
     printf("Finished assigning dd_array\n");
     dd_energy_array[i] = square_vec(dd_array->array[i]);
   }
   printf("exiting loop \n");
 }
+
+
+// try passing pointer to array to subtract vec and adjusting it in the helper function
+// stack created vecs get assigned. first time it gets assigned, and then when it's trie dto get assigned and changed
+// something happens
+// consistency with calc_derivatives. write the functions similarly.

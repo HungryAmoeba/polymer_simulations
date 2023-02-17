@@ -4,7 +4,7 @@
 #include "vectors.h"
 
 int_array* create_int_array(int rows, int columns) {
-    int_array* arr = malloc(sizeof(int_array*));
+    int_array* arr = malloc(sizeof(int_array));
     arr->array = (int**) malloc( rows * sizeof(int*));
     for (int i = 0; i < rows; i++){
         arr->array[i] = (int*) calloc(columns, sizeof(int));
@@ -23,7 +23,7 @@ void destroy_int_array(int_array* arr) {
 }
 
 vec_array* create_vec_array(int num_vecs) {
-    vec_array* arr = malloc(sizeof(vec_array*));
+    vec_array* arr = malloc(sizeof(vec_array));
     arr->array = (vec*) malloc(num_vecs * sizeof(vec));
     arr->n_elements = num_vecs;
     return arr; 
@@ -51,7 +51,7 @@ vec add_vec(vec x, vec y) {
 vec subtract_vec(vec x, vec y) {
     vec z;
     z.i_ind = x.i_ind - y.i_ind;
-    z.j_ind = x.j_ind + y.j_ind;
+    z.j_ind = x.j_ind - y.j_ind;
     return z;
 }
 
