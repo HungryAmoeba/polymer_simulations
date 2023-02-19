@@ -8,19 +8,28 @@
 
 int main(int argc, char **argv) {
     // expect to get Main rows, columns, N
-    int n_steps = 1 + 1E8; // Should use 1  + E9 for full experiments
-    int save_freq = 1E7; // Frequency at which the board state gets written
+    int n_steps = 1 + 1E5; // Should use 1  + E9 for full experiments
+    int save_freq = 1E4; // Frequency at which the board state gets written
     
-    int rows, cols, N;
-    if (argc != 4) {
-        printf("Usage: ./Main {lattice rows} {lattice columns} {number of monomers}\n");
+    int rows, cols, N, geometry;
+    if (argc < 4 || argc > 5) {
+        printf("Usage: ./Main {lattice rows} {lattice columns} {number of monomers} {geometry (optional)}\n");
+        printf("geometry = 2 for cylindrical, ");
         exit(0);
     }
     else {
         rows = atoi(argv[1]);     // lattice board rows
         cols = atoi(argv[2]);     // lattice board columns
         N = atoi(argv[3]);        // number of monomers
+        geometry = 0;
+    } 
+    if (argc == 5) {
+        geometry = atoi(argv[4]);
+        if (geometry == 2) {
+            printf("Beginning simulation on the cylinder\n");
+        }
     }
+
     double l_p = 2.0;                   // persistence length
     double b = 2.8;                      // average bond length
     
@@ -32,7 +41,7 @@ int main(int argc, char **argv) {
     }
     printf("Found file to write to\n");
 
-    System* sys = create_system(N, rows, cols, l_p, b);
+    System* sys = create_system(N, rows, cols, l_p, b, geometry);
     initialize_starting_state(sys);
     System* sys_copy = deep_copy_system(sys);
 

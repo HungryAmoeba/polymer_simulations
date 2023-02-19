@@ -6,7 +6,7 @@
 
 #include "helper.h"
 
-System* create_system(int N, int board_rows, int board_cols, double l_p, double b) {
+System* create_system(int N, int board_rows, int board_cols, double l_p, double b, int geometry) {
     System* sys = malloc(sizeof(System));
     sys->n_monomers = N;
     sys->board_cols = board_cols;
@@ -14,6 +14,7 @@ System* create_system(int N, int board_rows, int board_cols, double l_p, double 
     sys->b = b;
     sys->l_p = l_p;
     sys->curr_energy = 0;
+    sys->geometry = geometry;
 
     sys->monomer_locations = calloc(2 * N , sizeof(int));
     sys->lattice = calloc(board_cols * board_rows, sizeof(int));
@@ -32,7 +33,7 @@ void destroy_system(System* sys) {
 }
 
 System* deep_copy_system(System *sys) {
-    System* sys_copy = create_system(sys->n_monomers, sys->board_rows, sys->board_cols, sys->l_p, sys->b);
+    System* sys_copy = create_system(sys->n_monomers, sys->board_rows, sys->board_cols, sys->l_p, sys->b, sys->geometry);
     for (int i = 0; i < 2 * sys->n_monomers; i++) {
         sys_copy->monomer_locations[i] = sys->monomer_locations[i];
         sys_copy->derivatives[i] = sys->derivatives[i];
@@ -109,6 +110,9 @@ void print_board(System *sys) {
     }   
 }
 
+void calc_d_ind_cylinder(System *sys, int index) {
+    // TODO
+}
 void calc_d_ind(System *sys, int index) {
     if (index < 0 || index > sys->n_monomers) {
         printf("error, out of bounds\n");
@@ -186,8 +190,69 @@ int *get_move(int move_num) {
   return move_arr;
 }
 
+int check_legal_cylinder(int ind, System* sys, int* mv_arr) {
+    int pi = sys->monomer_locations[ind] + mv_arr[0];
+    int pj = sys->monomer_locations[ind + sys->n_monomers] + mv_arr[1];
+
+    pi = (pi + sys->n_monomers)%sys->n_monomers;
+
+    if (pj < 0 || pj >= sys->board_cols) {
+        return 0;
+    }
+    if (sys->lattice[pi*sys->board_cols + pj] == 1) {
+        return 0;
+    }
+    // check for excluded volume in neighbors and diagonals
+    // don't check move array index
+    // only check if in bounds
+
+    // i index search = 
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            if (i != -mv_arr[0] || j != -mv_arr[1]) {
+                // check that the j-index is not out of bounds
+                if (j + pj >= 0 && j + pj < sys->board_cols) {
+                    int row_num = (pi + i + sys->n_monomers)%sys->n_monomers;
+                    int col_num = pj + j;
+                    if (sys->lattice[row_num* sys->board_cols + col_num] == 1) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    // check the distance works
+    if (ind != 0) {
+        int dist_x = pi - sys->monomer_locations[ind - 1]; 
+
+        int dist_y_no_wrap = pj - sys->monomer_locations[ind - 1 + sys->n_monomers];
+        int dist_y_wrap = sys->n_monomers - dist_y_no_wrap;
+        int dist_y = min(abs(dist_y_no_wrap), abs(dist_y_wrap));
+    
+        if (dist_x*dist_x + dist_y*dist_y > 13) {
+            return 0;
+        }
+    }
+    if (ind != sys->n_monomers -1) {
+        // compare to next monomer
+        int dist_x = pi - sys->monomer_locations[ind + 1];
+        int dist_y_no_wrap = pj - sys->monomer_locations[ind + 1 + sys->n_monomers];
+        int dist_y_wrap = sys->n_monomers - dist_y_no_wrap;
+        int dist_y = min(abs(dist_y_no_wrap), abs(dist_y_wrap));
+        if (dist_x*dist_x + dist_y*dist_y > 13) {
+            return 0;
+        } 
+    }
+    return 1;
+}
+
 int check_legal(int ind, System* sys, int* mv_arr) {
-    // assumes plane geometry unless 
+    // call other function if it's a cylinder
+    if (sys->geometry == 2) {
+        int result = check_legal_cylinder(ind, sys, mv_arr);
+        return result;
+    }
     int pi = sys->monomer_locations[ind] + mv_arr[0];
     int pj = sys->monomer_locations[ind + sys->n_monomers] + mv_arr[1];
 
@@ -315,6 +380,11 @@ void sys_copy_over(System* sys_1, System* sys_2, int ind) {
 
     // update current energy
     sys_2->curr_energy = sys_1->curr_energy;
+}
 
-
+int min(int a, int b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
 }

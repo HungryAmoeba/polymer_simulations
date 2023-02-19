@@ -18,7 +18,7 @@ typedef struct System
     double curr_energy;         // Current bending energy
 } System;
 
-System* create_system(int N, int board_rows, int board_cols, double l_p, double b);
+System* create_system(int N, int board_rows, int board_cols, double l_p, double b, int geometry);
 
 void print_board(System *sys);
 
@@ -27,6 +27,8 @@ void destroy_system(System* sys);
 System* deep_copy_system(System *sys);
 
 void initialize_starting_state(System* sys);
+
+void calc_d_ind_cylinder(System *sys, int index);
 
 void calc_d_ind(System *sys, int index);
 
@@ -48,6 +50,8 @@ void shuffle(int *array, size_t n);
  */
 int *get_move(int move_num);
 
+int check_legal_cylinder(int ind, System* sys, int* mv_arr);
+
 /**
  * Check that a proposed move is legal, meaning that it is
  * not out of bounds, or does not violate excluded volume or
@@ -64,5 +68,6 @@ double update_system(System *sys, int ind);
 
 void sys_copy_over(System* sys_1, System* sys_2, int ind);
 
+int min(int a, int b);
 
 #endif
