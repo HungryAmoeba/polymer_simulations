@@ -7,8 +7,8 @@ typedef struct System
 {
     int geometry;               // 0 for planar or 1 for cylindrical
     int n_monomers;             // N
-    int board_rows;             // The number of rows
-    int board_cols;             // number of columns
+    int board_rows;             // The number of rows. Height of array/cylinder
+    int board_cols;             // number of columns. Width of array/diameter of cylinder
     double l_p;                 // persistence length
     double b;                   // kuhn length
     int* monomer_locations;     // Array storing the coordinates of the monomers
@@ -30,6 +30,16 @@ void initialize_starting_state(System* sys);
 
 void calc_d_ind_cylinder(System *sys, int index);
 
+/**
+ * Calculates the derivative of the monomer array at a given index
+ * Note that i is the ROW number, and j is the COLUMN number. It is
+ * assumed that for a cylinder, the rectangle is wrapped around so 
+ * j needs to be checked for wraparound
+ *
+ * @param array an integer array
+ * @param n the size of that array
+ * @return nothing. Shuffles in places
+ */
 void calc_d_ind(System *sys, int index);
 
 /**

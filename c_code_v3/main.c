@@ -101,6 +101,9 @@ int main(int argc, char **argv) {
                 int original_j = sys->monomer_locations[ind + sys->n_monomers];
                 int pi = original_i + pm[0];
                 int pj = original_j + pm[1];
+                if (sys->geometry == 2) {
+                    pj = (pj + sys->n_monomers)%sys->n_monomers;
+                }
 
                 sys_copy->monomer_locations[ind] = pi;
                 sys_copy->monomer_locations[ind + sys->n_monomers] = pj;

@@ -110,9 +110,6 @@ void print_board(System *sys) {
     }   
 }
 
-void calc_d_ind_cylinder(System *sys, int index) {
-    // TODO
-}
 void calc_d_ind(System *sys, int index) {
     if (index < 0 || index > sys->n_monomers) {
         printf("error, out of bounds\n");
@@ -123,17 +120,60 @@ void calc_d_ind(System *sys, int index) {
         // normalize R2 - R1
         i_ind = (double) (sys->monomer_locations[1] - sys->monomer_locations[0]);
         j_ind = (double) (sys->monomer_locations[sys->n_monomers + 1] - sys->monomer_locations[sys->n_monomers]);
+
+        if (sys->geometry == 2) {
+            double j_ind_wrap = sys->n_monomers - fabs(j_ind);
+            if (fabs(j_ind_wrap) < fabs(j_ind)) {
+                if (sys->monomer_locations[1 + sys->n_monomers] > sys->monomer_locations[sys->n_monomers]) {
+                    j_ind = - j_ind_wrap;
+                } else {
+                    j_ind = j_ind_wrap;
+                }
+            }
+        }
     } else if (index == (sys->n_monomers - 1)) {
         // normalize RN - R(N-1)
         i_ind = (double) (sys->monomer_locations[index] - sys->monomer_locations[index - 1]);
         j_ind = (double) (sys->monomer_locations[index + sys->n_monomers] - sys->monomer_locations[index -1 + sys->n_monomers]);
+
+        if (sys->geometry == 2) {
+            double j_ind_wrap = sys->n_monomers - fabs(j_ind);
+            if (fabs(j_ind_wrap) < fabs(j_ind)) {
+                if (sys->monomer_locations[index + sys->n_monomers] > sys->monomer_locations[index-1+sys->n_monomers]) {
+                    j_ind = - j_ind_wrap;
+                } else {
+                    j_ind = j_ind_wrap;
+                }
+            }
+        }
     } else {
         // calculate left hand side terms
         double i_ind_left = (double) (sys->monomer_locations[index] - sys->monomer_locations[index -1]);
         double j_ind_left = (double) (sys->monomer_locations[index + sys->n_monomers] - sys->monomer_locations[index + sys->n_monomers - 1] );
+        // adjust i_ind_left for wrap if necessary
+        if (sys->geometry == 2) {
+            double j_ind_wrap = sys->n_monomers - fabs(j_ind_left);
+            if (fabs(j_ind_wrap) < fabs(j_ind_left)) {
+                if (sys->monomer_locations[index + sys->n_monomers] > sys->monomer_locations[index-1+sys->n_monomers]) {
+                    j_ind_left = - j_ind_wrap;
+                } else {
+                    j_ind_left = j_ind_wrap;
+                }
+            }
+        }
         double left_norm = sqrt(i_ind_left*i_ind_left + j_ind_left*j_ind_left); 
         double i_ind_right = (double) (sys->monomer_locations[index + 1] - sys->monomer_locations[index]);
         double j_ind_right = (double) (sys->monomer_locations[index + sys->n_monomers + 1] - sys->monomer_locations[index + sys->n_monomers] );
+        if (sys->geometry == 2) {
+            double j_ind_wrap = sys->n_monomers - fabs(j_ind_right);
+            if (fabs(j_ind_wrap) < fabs(j_ind_right)) {
+                if (sys->monomer_locations[index + sys->n_monomers + 1] > sys->monomer_locations[index + sys->n_monomers]) {
+                    j_ind_right = - j_ind_wrap;
+                } else {
+                    j_ind_right = j_ind_wrap;
+                }
+            }
+        }
         double right_norm = sqrt(i_ind_right*i_ind_right + j_ind_right*j_ind_right);
         i_ind = (double) i_ind_left/left_norm + i_ind_right/right_norm;
         j_ind = (double) j_ind_left/left_norm + j_ind_right/right_norm;
@@ -194,9 +234,10 @@ int check_legal_cylinder(int ind, System* sys, int* mv_arr) {
     int pi = sys->monomer_locations[ind] + mv_arr[0];
     int pj = sys->monomer_locations[ind + sys->n_monomers] + mv_arr[1];
 
-    pi = (pi + sys->n_monomers)%sys->n_monomers;
+    pj = (pj + sys->n_monomers)%sys->n_monomers;
 
-    if (pj < 0 || pj >= sys->board_cols) {
+
+    if (pi < 0 || pi >= sys->board_rows) {
         return 0;
     }
     if (sys->lattice[pi*sys->board_cols + pj] == 1) {
@@ -211,9 +252,9 @@ int check_legal_cylinder(int ind, System* sys, int* mv_arr) {
         for (int j = -1; j < 2; j++) {
             if (i != -mv_arr[0] || j != -mv_arr[1]) {
                 // check that the j-index is not out of bounds
-                if (j + pj >= 0 && j + pj < sys->board_cols) {
-                    int row_num = (pi + i + sys->n_monomers)%sys->n_monomers;
-                    int col_num = pj + j;
+                if (i + pi >= 0 && i + pi < sys->board_rows) {
+                    int row_num = i + pi; 
+                    int col_num = (pj + j + sys->n_monomers)%sys->n_monomers;
                     if (sys->lattice[row_num* sys->board_cols + col_num] == 1) {
                         return 0;
                     }
@@ -227,7 +268,7 @@ int check_legal_cylinder(int ind, System* sys, int* mv_arr) {
         int dist_x = pi - sys->monomer_locations[ind - 1]; 
 
         int dist_y_no_wrap = pj - sys->monomer_locations[ind - 1 + sys->n_monomers];
-        int dist_y_wrap = sys->n_monomers - dist_y_no_wrap;
+        int dist_y_wrap = sys->n_monomers - abs(dist_y_no_wrap);
         int dist_y = min(abs(dist_y_no_wrap), abs(dist_y_wrap));
     
         if (dist_x*dist_x + dist_y*dist_y > 13) {
@@ -238,7 +279,7 @@ int check_legal_cylinder(int ind, System* sys, int* mv_arr) {
         // compare to next monomer
         int dist_x = pi - sys->monomer_locations[ind + 1];
         int dist_y_no_wrap = pj - sys->monomer_locations[ind + 1 + sys->n_monomers];
-        int dist_y_wrap = sys->n_monomers - dist_y_no_wrap;
+        int dist_y_wrap = sys->n_monomers - abs(dist_y_no_wrap);
         int dist_y = min(abs(dist_y_no_wrap), abs(dist_y_wrap));
         if (dist_x*dist_x + dist_y*dist_y > 13) {
             return 0;
