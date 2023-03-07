@@ -8,8 +8,8 @@
 
 int main(int argc, char **argv) {
     // expect to get Main rows, columns, N
-    int n_steps = 1 + 1E5; // Should use 1  + E9 for full experiments
-    int save_freq = 1E4; // Frequency at which the board state gets written
+    int n_steps = 1 + 1E8; // Should use 1  + E9 for full experiments
+    int save_freq = 1E7; // Frequency at which the board state gets written
     
     int rows, cols, N, geometry;
     if (argc < 4 || argc > 5) {
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             for (size_t i = 0; i < N; i++) {
                 fprintf(fptr, "%d,%d\n", sys->monomer_locations[i], sys->monomer_locations[i + sys->n_monomers]);
             }
-            print_board(sys);
+            //print_board(sys);
         }
         
         // for each step, perform n_monomers proposals
