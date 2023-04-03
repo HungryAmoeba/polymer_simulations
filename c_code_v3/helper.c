@@ -81,7 +81,7 @@ void initialize_starting_state(System* sys) {
     }
 
     // print out the lattice
-    print_board(sys);
+    // print_board(sys);
 
     // calculate the initial derivatives
     for (int i = 0; i < sys->n_monomers; i++) {
@@ -89,10 +89,22 @@ void initialize_starting_state(System* sys) {
     }
 
     // calculate the difference in derivatives
-    for (int i = 0; i < sys->n_monomers - 1; i++) {
-        double i_ind = sys->derivatives[i + 1] - sys->derivatives[i];
-        double j_ind = sys->derivatives[i + 1 + sys->n_monomers] - sys->derivatives[i + sys->n_monomers];
-        sys->diff_derivatives[i] = i_ind*i_ind + j_ind*j_ind;
+    if (sys->geometry == 0) {
+        for (int i = 0; i < sys->n_monomers - 1; i++) {
+            double i_ind = sys->derivatives[i + 1] - sys->derivatives[i];
+            double j_ind = sys->derivatives[i + 1 + sys->n_monomers] - sys->derivatives[i + sys->n_monomers];
+            sys->diff_derivatives[i] = i_ind*i_ind + j_ind*j_ind;
+        }
+    }
+
+    // calculate the derivative for cylinder ? 
+    if (sys->geometry == 2) {
+        for (int i = 0; i < sys->n_monomers - 1; i++) {
+            // project into the cylinder? 
+            double i_ind = sys->derivatives[i + 1] - sys->derivatives[i];
+            double j_ind = sys->derivatives[i + 1 + sys->n_monomers] - sys->derivatives[i + sys->n_monomers];
+            sys->diff_derivatives[i] = i_ind*i_ind + j_ind*j_ind;
+        }
     }
 
     // calculate the initial starting energy
