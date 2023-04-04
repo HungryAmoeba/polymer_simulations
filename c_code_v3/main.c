@@ -34,7 +34,10 @@ int main(int argc, char **argv) {
     double b = 2.8;                      // average bond length
     
     // open file to write to
-    FILE *fptr = fopen("simulation_results/results.txt", "w");
+    // format by {geometry}_{N}_{rows}_{cols}_{l_p}_{b}.txt
+    char savefile[150];
+    sprintf(savefile, "simulation_results/%d_%d_%d_%d_%.2f_%.2f.txt", geometry, N, rows, cols, l_p, b);
+    FILE *fptr = fopen(savefile, "w");
     if (fptr == NULL) {
         printf("Error in opening file pointer \n");
         exit(1);
