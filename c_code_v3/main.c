@@ -9,11 +9,13 @@
 int main(int argc, char **argv) {
     // expect to get Main rows, columns, N
     int n_steps = 1 + 1E8; // Should use 1  + E9 for full experiments
-    int save_freq = 1E7; // Frequency at which the board state gets written
+    int save_freq = 1E6; // Frequency at which the board state gets written
     
     int rows, cols, N, geometry;
-    if (argc < 4 || argc > 5) {
-        printf("Usage: ./Main {lattice rows} {lattice columns} {number of monomers} {geometry (optional)}\n");
+    double l_p;
+    char* endptr;
+    if (argc != 6) {
+        printf("Usage: ./Main {lattice rows} {lattice columns} {number of monomers} {l_p} {geometry}\n");
         printf("geometry = 2 for cylindrical, ");
         exit(0);
     }
@@ -21,16 +23,14 @@ int main(int argc, char **argv) {
         rows = atoi(argv[1]);     // lattice board rows
         cols = atoi(argv[2]);     // lattice board columns
         N = atoi(argv[3]);        // number of monomers
-        geometry = 0;
-    } 
-    if (argc == 5) {
-        geometry = atoi(argv[4]);
+        l_p = strtod(argv[4], &endptr);    // persistence length, is a double
+        geometry = atoi(argv[5]);
         if (geometry == 2) {
             printf("Beginning simulation on the cylinder\n");
         }
-    }
+    } 
 
-    double l_p = 2.0;                   // persistence length
+    // double l_p = 2.0;                   // persistence length (now )
     double b = 2.8;                      // average bond length
     
     // open file to write to
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
             // double recalculated_energy = calc_energy(states, N, l_p, b);
             // printf("Current recalculated energy is %f, difference is %lf\n", recalculated_energy, ce-recalculated_energy);
             // save states to the file
-            fprintf(fptr, "Step is %d \n", step);
+            fprintf(fptr, "Step is %d, ce is %f \n", step, sys->curr_energy);
             for (size_t i = 0; i < N; i++) {
                 fprintf(fptr, "%d,%d\n", sys->monomer_locations[i], sys->monomer_locations[i + sys->n_monomers]);
             }
@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
                 int original_j = sys->monomer_locations[ind + sys->n_monomers];
                 int pi = original_i + pm[0];
                 int pj = original_j + pm[1];
+                free(pm);
                 if (sys->geometry == 2) {
                     pj = (pj + sys->n_monomers)%sys->n_monomers;
                 }
@@ -140,5 +141,6 @@ int main(int argc, char **argv) {
     destroy_system(sys_copy);
     destroy_system(sys);
 
+    fclose(fptr);
 }
 

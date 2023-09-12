@@ -167,6 +167,7 @@ cython_debug/
 #.idea/
 
 chakraborty/simulation_results*
+*.out
 
 # Prerequisites
 *.d
