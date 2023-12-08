@@ -1,6 +1,7 @@
-Bond fluctuation model of semiflexible polymer chain in confinement
-pybind
-Randomly sample the N from the points. One point might be chosen twice, but
-otherwise detailed balance is not satisfied.
+## Overview
+
+This repository contains a bond fluctuation model of a semiflexible polymer chain in confinement. The current experiments consider confinement to a cylindrical surface. 
+
+The dynamics of the polymer are simulated by assigning an energy based on the bending of the polymer, and running the Metropolis algorithm. 
 
 
